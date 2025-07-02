@@ -71,7 +71,7 @@ This project adheres to a code of conduct that promotes a welcoming and inclusiv
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/t-pot-honeypot-infrastructure.git
+git clone https://github.com/Xieonie/t-pot-honeypot-infrastructure.git
 cd t-pot-honeypot-infrastructure
 
 # Create development branch
@@ -301,6 +301,12 @@ Contributors will be recognized in:
 - **README.md**: Contributors section
 - **Release Notes**: Major contributions highlighted
 - **Documentation**: Author attribution where appropriate
+
+## Project Maintainer
+
+**Xieonie** - *Project Creator and Lead Maintainer*
+- GitHub: [@Xieonie](https://github.com/Xieonie)
+- Responsible for project direction, security reviews, and major architectural decisions
 
 ## Getting Help
 

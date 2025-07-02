@@ -57,7 +57,7 @@ Internet
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/t-pot-honeypot-infrastructure.git
+   git clone https://github.com/Xieonie/t-pot-honeypot-infrastructure.git
    cd t-pot-honeypot-infrastructure
    ```
 
@@ -190,6 +190,11 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 👨‍💻 Author
+
+**Xieonie** - *Project Creator and Maintainer*
+- GitHub: [@Xieonie](https://github.com/Xieonie)
+
 ## 🙏 Acknowledgments
 
 - [T-Pot Community](https://github.com/telekom-security/tpotce) for the excellent honeypot platform
@@ -199,8 +204,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - 📖 [Documentation](docs/)
-- 🐛 [Issue Tracker](https://github.com/YOUR_USERNAME/t-pot-honeypot-infrastructure/issues)
-- 💬 [Discussions](https://github.com/YOUR_USERNAME/t-pot-honeypot-infrastructure/discussions)
+- 🐛 [Issue Tracker](https://github.com/Xieonie/t-pot-honeypot-infrastructure/issues)
+- 💬 [Discussions](https://github.com/Xieonie/t-pot-honeypot-infrastructure/discussions)
 
 ---
 
