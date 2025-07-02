@@ -1,0 +1,231 @@
+<?xml version="1.0"?>
+<opnsense>
+  <nat>
+    <!-- Port forwarding rules for honeypot services -->
+    <rule>
+      <id>1</id>
+      <tracker>1</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>22</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>22</local-port>
+      <descr>SSH to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+      <created>
+        <time>1640995200</time>
+        <username>admin</username>
+      </created>
+    </rule>
+    
+    <rule>
+      <id>2</id>
+      <tracker>2</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>23</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>23</local-port>
+      <descr>Telnet to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+    </rule>
+    
+    <rule>
+      <id>3</id>
+      <tracker>3</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>80</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>80</local-port>
+      <descr>HTTP to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+    </rule>
+    
+    <rule>
+      <id>4</id>
+      <tracker>4</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>443</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>443</local-port>
+      <descr>HTTPS to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+    </rule>
+    
+    <rule>
+      <id>5</id>
+      <tracker>5</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>2222</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>2222</local-port>
+      <descr>SSH alternate port to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+    </rule>
+    
+    <rule>
+      <id>6</id>
+      <tracker>6</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>8080</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>8080</local-port>
+      <descr>HTTP alternate port to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+    </rule>
+    
+    <rule>
+      <id>7</id>
+      <tracker>7</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>udp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>53</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>53</local-port>
+      <descr>DNS to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+    </rule>
+    
+    <rule>
+      <id>8</id>
+      <tracker>8</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>udp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>161</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>161</local-port>
+      <descr>SNMP to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+    </rule>
+    
+    <rule>
+      <id>9</id>
+      <tracker>9</tracker>
+      <type>redirect</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>udp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <any>1</any>
+        <port>1900</port>
+      </destination>
+      <target>10.0.100.10</target>
+      <local-port>1900</local-port>
+      <descr>UPnP to T-Pot honeypot</descr>
+      <associated-rule-id>pass</associated-rule-id>
+    </rule>
+    
+    <!-- Outbound NAT for honeypot network -->
+    <outbound>
+      <mode>automatic</mode>
+      <rule>
+        <id>1</id>
+        <tracker>1</tracker>
+        <type>nat</type>
+        <interface>wan</interface>
+        <ipprotocol>inet</ipprotocol>
+        <protocol>any</protocol>
+        <source>
+          <network>10.0.100.0/24</network>
+        </source>
+        <destination>
+          <any>1</any>
+        </destination>
+        <target>
+          <address>(wan)</address>
+        </target>
+        <descr>Outbound NAT for honeypot network</descr>
+      </rule>
+      
+      <rule>
+        <id>2</id>
+        <tracker>2</tracker>
+        <type>nat</type>
+        <interface>wan</interface>
+        <ipprotocol>inet</ipprotocol>
+        <protocol>any</protocol>
+        <source>
+          <network>192.168.1.0/24</network>
+        </source>
+        <destination>
+          <any>1</any>
+        </destination>
+        <target>
+          <address>(wan)</address>
+        </target>
+        <descr>Outbound NAT for management network</descr>
+      </rule>
+    </outbound>
+  </nat>
+</opnsense>

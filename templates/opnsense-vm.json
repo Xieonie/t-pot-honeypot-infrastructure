@@ -1,0 +1,261 @@
+{
+  "vmid": 100,
+  "name": "opnsense-firewall-template",
+  "description": "OPNsense Firewall VM Template for T-Pot Infrastructure",
+  "template": 1,
+  "ostype": "freebsd",
+  "arch": "x86_64",
+  "cores": 2,
+  "sockets": 1,
+  "memory": 2048,
+  "balloon": 1,
+  "shares": 1000,
+  "numa": 0,
+  "hotplug": "disk,network,usb",
+  "boot": "order=ide2;scsi0",
+  "bootdisk": "scsi0",
+  "scsihw": "virtio-scsi-pci",
+  "scsi0": "local-lvm:vm-100-disk-0,size=20G,cache=writeback,discard=on,ssd=1",
+  "ide2": "local:iso/OPNsense-23.7-OpenSSL-dvd-amd64.iso,media=cdrom",
+  "net0": "virtio,bridge=vmbr0,firewall=0,link_down=0",
+  "net1": "virtio,bridge=vmbr1,firewall=0,link_down=0", 
+  "net2": "virtio,bridge=vmbr2,firewall=0,link_down=0",
+  "vga": "qxl,memory=16",
+  "tablet": 1,
+  "acpi": 1,
+  "kvm": 1,
+  "protection": 1,
+  "startup": "order=1,up=30,down=60",
+  "tags": "firewall;opnsense;security;tpot-infrastructure",
+  "meta": {
+    "creation_date": "2024-01-01",
+    "created_by": "tpot-infrastructure-script",
+    "purpose": "Network security and traffic filtering for T-Pot honeypot infrastructure",
+    "maintenance_schedule": "monthly",
+    "backup_schedule": "daily",
+    "monitoring_enabled": true
+  },
+  "network_config": {
+    "interfaces": {
+      "wan": {
+        "device": "vtnet0",
+        "bridge": "vmbr0",
+        "description": "WAN Interface - Internet Connection",
+        "type": "dhcp",
+        "firewall_zone": "wan"
+      },
+      "lan": {
+        "device": "vtnet1", 
+        "bridge": "vmbr1",
+        "description": "LAN Interface - Management Network",
+        "ip": "192.168.1.1",
+        "subnet": "24",
+        "firewall_zone": "lan"
+      },
+      "dmz": {
+        "device": "vtnet2",
+        "bridge": "vmbr2", 
+        "description": "DMZ Interface - Honeypot Network",
+        "ip": "10.0.100.1",
+        "subnet": "24",
+        "firewall_zone": "dmz"
+      }
+    },
+    "vlans": {
+      "management": {
+        "id": 10,
+        "interface": "lan",
+        "description": "Management VLAN"
+      },
+      "honeypot": {
+        "id": 100,
+        "interface": "dmz", 
+        "description": "Honeypot VLAN"
+      }
+    }
+  },
+  "firewall_config": {
+    "default_policy": "block",
+    "rules": [
+      {
+        "id": 1,
+        "action": "pass",
+        "interface": "wan",
+        "protocol": "tcp",
+        "source": "any",
+        "destination": "10.0.100.10",
+        "ports": [22, 23, 80, 443, 2222, 8080],
+        "description": "Allow honeypot services from internet",
+        "log": true
+      },
+      {
+        "id": 2,
+        "action": "pass",
+        "interface": "wan",
+        "protocol": "udp", 
+        "source": "any",
+        "destination": "10.0.100.10",
+        "ports": [53, 161, 1900],
+        "description": "Allow UDP honeypot services",
+        "log": true
+      },
+      {
+        "id": 3,
+        "action": "block",
+        "interface": "dmz",
+        "protocol": "any",
+        "source": "10.0.100.0/24",
+        "destination": "192.168.1.0/24", 
+        "description": "Block honeypot access to management network",
+        "log": true
+      },
+      {
+        "id": 4,
+        "action": "pass",
+        "interface": "lan",
+        "protocol": "tcp",
+        "source": "192.168.1.0/24",
+        "destination": "10.0.100.0/24",
+        "ports": [22, 64297],
+        "description": "Allow management access to honeypot",
+        "log": false
+      }
+    ],
+    "nat_rules": [
+      {
+        "id": 1,
+        "type": "redirect",
+        "interface": "wan",
+        "protocol": "tcp",
+        "source": "any",
+        "destination_port": 22,
+        "target": "10.0.100.10",
+        "target_port": 22,
+        "description": "SSH to honeypot"
+      },
+      {
+        "id": 2,
+        "type": "redirect", 
+        "interface": "wan",
+        "protocol": "tcp",
+        "source": "any",
+        "destination_port": 80,
+        "target": "10.0.100.10",
+        "target_port": 80,
+        "description": "HTTP to honeypot"
+      }
+    ]
+  },
+  "services": {
+    "dhcp": {
+      "enabled": true,
+      "interface": "lan",
+      "range_start": "192.168.1.100",
+      "range_end": "192.168.1.199",
+      "lease_time": 86400,
+      "dns_servers": ["192.168.1.1", "8.8.8.8"],
+      "domain": "tpot.local"
+    },
+    "dns": {
+      "enabled": true,
+      "forwarders": ["8.8.8.8", "8.8.4.4", "1.1.1.1"],
+      "domain": "tpot.local",
+      "allow_override": true
+    },
+    "ntp": {
+      "enabled": true,
+      "servers": ["pool.ntp.org", "time.cloudflare.com"],
+      "timezone": "UTC"
+    },
+    "snmp": {
+      "enabled": false,
+      "community": "public",
+      "contact": "admin@tpot.local",
+      "location": "T-Pot Infrastructure"
+    }
+  },
+  "logging": {
+    "level": "informational",
+    "targets": [
+      {
+        "type": "file",
+        "path": "/var/log/filter.log",
+        "facility": "security"
+      },
+      {
+        "type": "remote_syslog",
+        "server": "192.168.1.50",
+        "port": 514,
+        "facility": "local0"
+      }
+    ],
+    "log_firewall": true,
+    "log_dhcp": false,
+    "log_auth": true
+  },
+  "monitoring": {
+    "snmp_enabled": false,
+    "prometheus_exporter": false,
+    "health_checks": [
+      {
+        "name": "wan_connectivity",
+        "type": "ping",
+        "target": "8.8.8.8",
+        "interval": 60
+      },
+      {
+        "name": "honeypot_connectivity", 
+        "type": "ping",
+        "target": "10.0.100.10",
+        "interval": 30
+      }
+    ]
+  },
+  "backup": {
+    "enabled": true,
+    "schedule": "0 2 * * *",
+    "retention_days": 30,
+    "include_config": true,
+    "include_logs": false,
+    "destination": "/backup/opnsense"
+  },
+  "security": {
+    "ssh_keys": [],
+    "admin_password_hash": "$2b$10$...",
+    "session_timeout": 240,
+    "max_login_attempts": 3,
+    "lockout_duration": 300,
+    "ssl_certificate": {
+      "type": "self_signed",
+      "key_size": 2048,
+      "validity_days": 365
+    }
+  },
+  "high_availability": {
+    "enabled": false,
+    "role": "master",
+    "sync_interface": "lan",
+    "backup_node": null,
+    "virtual_ip": null
+  },
+  "performance": {
+    "optimization": "security",
+    "state_table_size": 100000,
+    "firewall_optimization": "aggressive",
+    "hardware_checksum_offload": true,
+    "hardware_tcp_segmentation_offload": true
+  },
+  "installation": {
+    "iso_file": "OPNsense-23.7-OpenSSL-dvd-amd64.iso",
+    "auto_install": false,
+    "post_install_script": "/opt/tpot/scripts/setup/configure-opnsense.sh",
+    "initial_config": "/opt/tpot/config/opnsense/initial-config.xml"
+  },
+  "deployment": {
+    "clone_from_template": true,
+    "linked_clone": false,
+    "full_clone": true,
+    "target_storage": "local-lvm",
+    "target_node": "proxmox-host"
+  }
+}

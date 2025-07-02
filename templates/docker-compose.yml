@@ -1,0 +1,184 @@
+# T-Pot Honeypot Infrastructure - Docker Compose Template
+# This file provides additional services for monitoring and management
+# Author: Security Infrastructure Team
+# Version: 1.0
+
+version: '3.8'
+
+services:
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: tpot_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - tpot_monitoring
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: tpot_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_INSTALL_PLUGINS=grafana-worldmap-panel,grafana-piechart-panel
+    networks:
+      - tpot_monitoring
+    depends_on:
+      - prometheus
+
+  # Node Exporter for system metrics
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: tpot_node_exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - tpot_monitoring
+
+  # Alertmanager for alert handling
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: tpot_alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    networks:
+      - tpot_monitoring
+
+  # Log aggregation with Fluentd
+  fluentd:
+    image: fluent/fluentd:latest
+    container_name: tpot_fluentd
+    restart: unless-stopped
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - ./monitoring/fluentd/fluent.conf:/fluentd/etc/fluent.conf:ro
+      - /var/log:/var/log:ro
+      - fluentd_data:/fluentd/log
+    networks:
+      - tpot_monitoring
+
+  # Backup service
+  backup:
+    image: alpine:latest
+    container_name: tpot_backup
+    restart: "no"
+    volumes:
+      - /opt/tpot:/backup/tpot:ro
+      - ./scripts/maintenance:/scripts:ro
+      - backup_data:/backup/output
+    command: /scripts/backup-tpot.sh
+    networks:
+      - tpot_monitoring
+
+  # Network monitoring with ntopng
+  ntopng:
+    image: ntop/ntopng:stable
+    container_name: tpot_ntopng
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - ntopng_data:/var/lib/ntopng
+      - ./monitoring/ntopng/ntopng.conf:/etc/ntopng/ntopng.conf:ro
+    command: --config-file=/etc/ntopng/ntopng.conf
+    networks:
+      - tpot_monitoring
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  # Threat intelligence feed aggregator
+  threat_intel:
+    image: python:3.9-alpine
+    container_name: tpot_threat_intel
+    restart: unless-stopped
+    volumes:
+      - ./tools/threat-intel-collector.py:/app/collector.py:ro
+      - threat_intel_data:/app/data
+    working_dir: /app
+    command: python collector.py
+    networks:
+      - tpot_monitoring
+    environment:
+      - UPDATE_INTERVAL=3600
+
+  # Web-based terminal for management
+  wetty:
+    image: wettyoss/wetty:latest
+    container_name: tpot_wetty
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      - SSHHOST=localhost
+      - SSHPORT=22
+      - SSHUSER=tpot
+    networks:
+      - tpot_monitoring
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  alertmanager_data:
+    driver: local
+  fluentd_data:
+    driver: local
+  backup_data:
+    driver: local
+  ntopng_data:
+    driver: local
+  threat_intel_data:
+    driver: local
+
+networks:
+  tpot_monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

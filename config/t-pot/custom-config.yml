@@ -1,0 +1,382 @@
+# T-Pot Custom Configuration
+# This file contains custom configuration for T-Pot honeypot services
+
+# Global T-Pot Configuration
+tpot:
+  version: "23.04"
+  edition: "STANDARD"
+  
+  # Network Configuration
+  network:
+    interface: "ens18"
+    ip_address: "10.0.100.10"
+    netmask: "255.255.255.0"
+    gateway: "10.0.100.1"
+    dns_servers:
+      - "10.0.100.1"
+      - "8.8.8.8"
+  
+  # Web Interface Configuration
+  web:
+    enabled: true
+    port: 64297
+    ssl_enabled: true
+    username: "admin"
+    # Password should be set during installation
+    
+  # Logging Configuration
+  logging:
+    level: "INFO"
+    max_file_size: "100MB"
+    max_files: 10
+    compress: true
+    
+  # Data Retention
+  retention:
+    logs_days: 30
+    pcaps_days: 7
+    malware_days: 90
+
+# Honeypot Services Configuration
+services:
+  
+  # Cowrie SSH/Telnet Honeypot
+  cowrie:
+    enabled: true
+    ssh_port: 22
+    telnet_port: 23
+    hostname: "server01"
+    kernel_version: "Linux 5.4.0-74-generic"
+    kernel_build_string: "#83-Ubuntu SMP Sat May 8 02:35:39 UTC 2021"
+    ssh_version: "SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.2"
+    
+    # Fake filesystem
+    filesystem: "/opt/tpot/etc/cowrie/honeyfs"
+    
+    # User accounts
+    users:
+      - username: "root"
+        password: "123456"
+      - username: "admin"
+        password: "admin"
+      - username: "user"
+        password: "password"
+    
+    # Download limits
+    download_limit_size: 10485760  # 10MB
+    
+  # Dionaea Malware Honeypot
+  dionaea:
+    enabled: true
+    listen_interfaces:
+      - "0.0.0.0"
+    
+    # Service ports
+    services:
+      ftp: 21
+      http: 80
+      https: 443
+      smb: 445
+      sip: 5060
+      tftp: 69
+      
+    # Malware collection
+    malware_dir: "/data/dionaea/malware"
+    
+  # Elasticpot Elasticsearch Honeypot
+  elasticpot:
+    enabled: true
+    port: 9200
+    cluster_name: "elasticsearch"
+    node_name: "node-1"
+    
+  # Honeytrap Multi-Service Honeypot
+  honeytrap:
+    enabled: true
+    listen_address: "0.0.0.0"
+    
+    # Service definitions
+    services:
+      - name: "ssh-proxy"
+        type: "proxy"
+        port: 2222
+        target: "cowrie:22"
+      - name: "http-proxy"
+        type: "proxy"
+        port: 8080
+        target: "dionaea:80"
+        
+  # Mailoney SMTP Honeypot
+  mailoney:
+    enabled: true
+    port: 25
+    hostname: "mail.company.com"
+    banner: "220 mail.company.com ESMTP Postfix"
+    
+  # Rdpy RDP Honeypot
+  rdpy:
+    enabled: true
+    port: 3389
+    
+  # Snare Web Application Honeypot
+  snare:
+    enabled: true
+    port: 8081
+    page_dir: "/opt/snare/pages"
+    
+  # Tanner Analysis Engine
+  tanner:
+    enabled: true
+    host: "tanner"
+    port: 8090
+    
+  # Heralding Credential Honeypot
+  heralding:
+    enabled: true
+    
+    # Protocol configurations
+    protocols:
+      ftp:
+        port: 2121
+        max_attempts: 3
+      http:
+        port: 8888
+        max_attempts: 3
+      pop3:
+        port: 110
+        max_attempts: 3
+      smtp:
+        port: 587
+        max_attempts: 3
+      ssh:
+        port: 2223
+        max_attempts: 3
+      telnet:
+        port: 2323
+        max_attempts: 3
+
+# Monitoring and Analysis
+monitoring:
+  
+  # ELK Stack Configuration
+  elasticsearch:
+    enabled: true
+    host: "elasticsearch"
+    port: 9200
+    index_prefix: "tpot"
+    
+  # Kibana Dashboard
+  kibana:
+    enabled: true
+    port: 5601
+    
+  # Logstash Processing
+  logstash:
+    enabled: true
+    port: 5044
+    
+  # Suricata IDS
+  suricata:
+    enabled: true
+    interface: "ens18"
+    rules_dir: "/etc/suricata/rules"
+    
+    # Custom rules
+    custom_rules:
+      - "alert tcp any any -> any 22 (msg:\"SSH Connection\"; sid:1000001;)"
+      - "alert tcp any any -> any 23 (msg:\"Telnet Connection\"; sid:1000002;)"
+      - "alert tcp any any -> any 80 (msg:\"HTTP Connection\"; sid:1000003;)"
+      
+  # P0f Passive OS Fingerprinting
+  p0f:
+    enabled: true
+    interface: "ens18"
+    
+  # Spiderfoot OSINT
+  spiderfoot:
+    enabled: false  # Resource intensive, enable if needed
+    port: 5001
+
+# Security Configuration
+security:
+  
+  # Firewall Rules (iptables)
+  firewall:
+    enabled: true
+    
+    # Allow specific management access
+    management_ips:
+      - "192.168.1.0/24"
+      
+    # Block known bad IPs
+    blacklist:
+      - "10.0.0.0/8"      # Private networks (except honeypot)
+      - "172.16.0.0/12"   # Private networks
+      - "192.168.0.0/16"  # Private networks (except management)
+      
+  # Rate Limiting
+  rate_limiting:
+    enabled: true
+    max_connections_per_ip: 100
+    time_window: 60  # seconds
+    
+  # Intrusion Detection
+  ids:
+    enabled: true
+    alert_threshold: 10  # alerts per minute
+    
+# Data Collection and Analysis
+data:
+  
+  # Attack Data Collection
+  collection:
+    enabled: true
+    
+    # Data types to collect
+    types:
+      - "connections"
+      - "credentials"
+      - "commands"
+      - "files"
+      - "malware"
+      - "network_flows"
+      
+  # Threat Intelligence Integration
+  threat_intel:
+    enabled: true
+    
+    # External feeds
+    feeds:
+      - name: "abuse_ch"
+        url: "https://feodotracker.abuse.ch/downloads/ipblocklist.json"
+        update_interval: 3600  # seconds
+      - name: "malware_bazaar"
+        url: "https://mb-api.abuse.ch/api/v1/"
+        update_interval: 3600
+        
+  # Data Export
+  export:
+    enabled: true
+    formats:
+      - "json"
+      - "csv"
+      - "stix"
+    destinations:
+      - "/data/exports"
+      - "syslog://192.168.1.50:514"
+
+# Performance Tuning
+performance:
+  
+  # Resource Limits
+  limits:
+    max_memory: "4GB"
+    max_cpu: "2"
+    max_disk_space: "50GB"
+    
+  # Optimization Settings
+  optimization:
+    log_compression: true
+    data_deduplication: true
+    index_optimization: true
+    
+# Backup and Recovery
+backup:
+  
+  # Backup Configuration
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 30
+  
+  # Backup Destinations
+  destinations:
+    - "/backup/tpot"
+    - "rsync://backup-server/tpot"
+    
+  # What to backup
+  include:
+    - "/data"
+    - "/opt/tpot/etc"
+    - "/var/log/tpot"
+    
+  # What to exclude
+  exclude:
+    - "*.tmp"
+    - "*.pcap"  # Too large, handle separately
+
+# Alerting and Notifications
+alerting:
+  
+  # Alert Configuration
+  enabled: true
+  
+  # Alert Channels
+  channels:
+    email:
+      enabled: true
+      smtp_server: "smtp.company.com"
+      smtp_port: 587
+      username: "alerts@company.com"
+      recipients:
+        - "admin@company.com"
+        - "security@company.com"
+        
+    slack:
+      enabled: false
+      webhook_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+      channel: "#security-alerts"
+      
+    syslog:
+      enabled: true
+      server: "192.168.1.50"
+      port: 514
+      facility: "local0"
+      
+  # Alert Rules
+  rules:
+    - name: "High Volume Attack"
+      condition: "connections_per_minute > 100"
+      severity: "critical"
+      
+    - name: "Malware Detected"
+      condition: "malware_samples > 0"
+      severity: "high"
+      
+    - name: "Credential Harvesting"
+      condition: "unique_credentials > 10"
+      severity: "medium"
+
+# Custom Scripts and Hooks
+custom:
+  
+  # Pre-start hooks
+  pre_start:
+    - "/opt/tpot/custom/pre-start.sh"
+    
+  # Post-start hooks
+  post_start:
+    - "/opt/tpot/custom/post-start.sh"
+    
+  # Shutdown hooks
+  shutdown:
+    - "/opt/tpot/custom/shutdown.sh"
+    
+  # Custom analysis scripts
+  analysis:
+    - "/opt/tpot/custom/analyze-logs.py"
+    - "/opt/tpot/custom/generate-iocs.sh"
+
+# Development and Testing
+development:
+  
+  # Debug Mode
+  debug: false
+  
+  # Test Mode (reduced logging, shorter retention)
+  test_mode: false
+  
+  # Development Features
+  features:
+    api_access: true
+    raw_logs: false
+    verbose_logging: false

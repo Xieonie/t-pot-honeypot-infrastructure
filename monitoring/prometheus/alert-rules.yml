@@ -1,0 +1,342 @@
+# Prometheus Alert Rules for T-Pot Honeypot Infrastructure
+# These rules define alerts for various security and operational events
+
+groups:
+  # Infrastructure Health Alerts
+  - name: infrastructure.rules
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}."
+
+      - alert: DiskSpaceLow
+        expr: 100 - ((node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes) > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk usage is above 90% on {{ $labels.instance }} filesystem {{ $labels.mountpoint }}."
+
+      - alert: HighLoadAverage
+        expr: node_load15 > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High load average on {{ $labels.instance }}"
+          description: "Load average is {{ $value }} for more than 10 minutes on {{ $labels.instance }}."
+
+  # Security Alerts
+  - name: security.rules
+    rules:
+      - alert: HighVolumeAttack
+        expr: rate(honeypot_connections_total[5m]) > 100
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High volume attack detected"
+          description: "Attack rate is {{ $value }} connections/sec on {{ $labels.instance }}."
+
+      - alert: MalwareDetected
+        expr: increase(malware_samples_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: high
+        annotations:
+          summary: "Malware sample detected"
+          description: "{{ $value }} new malware samples collected on {{ $labels.instance }}."
+
+      - alert: SuspiciousCommandExecution
+        expr: increase(command_executions_total{command=~".*rm -rf.*|.*wget.*|.*curl.*|.*nc.*"}[5m]) > 5
+        for: 1m
+        labels:
+          severity: high
+        annotations:
+          summary: "Suspicious command execution detected"
+          description: "{{ $value }} suspicious commands executed on {{ $labels.instance }}."
+
+      - alert: CredentialHarvesting
+        expr: increase(failed_login_attempts_total[5m]) > 50
+        for: 2m
+        labels:
+          severity: medium
+        annotations:
+          summary: "Credential harvesting attempt detected"
+          description: "{{ $value }} failed login attempts in 5 minutes on {{ $labels.instance }}."
+
+      - alert: DataExfiltrationAttempt
+        expr: rate(honeypot_data_transfer_bytes_total{direction="outbound"}[5m]) > 1000000
+        for: 1m
+        labels:
+          severity: high
+        annotations:
+          summary: "Data exfiltration attempt detected"
+          description: "High outbound data transfer rate: {{ $value }} bytes/sec on {{ $labels.instance }}."
+
+      - alert: UnusualConnectionPattern
+        expr: count by (src_ip) (increase(honeypot_connections_total[1h])) > 1000
+        for: 5m
+        labels:
+          severity: medium
+        annotations:
+          summary: "Unusual connection pattern detected"
+          description: "Source IP {{ $labels.src_ip }} has made {{ $value }} connections in the last hour."
+
+      - alert: NewAttackVector
+        expr: increase(security_events_total{event_type="new_attack_vector"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: medium
+        annotations:
+          summary: "New attack vector detected"
+          description: "{{ $value }} new attack vectors detected on {{ $labels.instance }}."
+
+  # Honeypot Service Alerts
+  - name: honeypot.rules
+    rules:
+      - alert: HoneypotServiceDown
+        expr: up{job=~".*honeypot.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Honeypot service {{ $labels.job }} is down"
+          description: "Honeypot service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 2 minutes."
+
+      - alert: LowHoneypotActivity
+        expr: rate(honeypot_connections_total[1h]) < 0.1
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low honeypot activity detected"
+          description: "Honeypot {{ $labels.instance }} has very low activity: {{ $value }} connections/sec."
+
+      - alert: HoneypotContainerRestart
+        expr: increase(container_start_time_seconds{name=~".*honeypot.*"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Honeypot container restarted"
+          description: "Container {{ $labels.name }} has restarted on {{ $labels.instance }}."
+
+      - alert: HoneypotDiskFull
+        expr: 100 - ((container_fs_usage_bytes{name=~".*honeypot.*"} / container_fs_limit_bytes{name=~".*honeypot.*"}) * 100) < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Honeypot container disk space low"
+          description: "Container {{ $labels.name }} has less than 10% disk space remaining."
+
+  # Network Alerts
+  - name: network.rules
+    rules:
+      - alert: NetworkInterfaceDown
+        expr: node_network_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Network interface {{ $labels.device }} is down"
+          description: "Network interface {{ $labels.device }} on {{ $labels.instance }} is down."
+
+      - alert: HighNetworkTraffic
+        expr: rate(node_network_receive_bytes_total[5m]) > 100000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High network traffic on {{ $labels.instance }}"
+          description: "Network interface {{ $labels.device }} is receiving {{ $value }} bytes/sec."
+
+      - alert: NetworkPacketLoss
+        expr: rate(node_network_receive_drop_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Network packet loss detected"
+          description: "Network interface {{ $labels.device }} on {{ $labels.instance }} is dropping {{ $value }} packets/sec."
+
+      - alert: SuspiciousNetworkActivity
+        expr: rate(node_network_transmit_bytes_total[5m]) > 50000000
+        for: 10m
+        labels:
+          severity: medium
+        annotations:
+          summary: "Suspicious outbound network activity"
+          description: "High outbound traffic on {{ $labels.device }}: {{ $value }} bytes/sec for 10+ minutes."
+
+  # Application Alerts
+  - name: application.rules
+    rules:
+      - alert: ElasticsearchClusterRed
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Elasticsearch cluster status is red"
+          description: "Elasticsearch cluster on {{ $labels.instance }} is in red state."
+
+      - alert: ElasticsearchClusterYellow
+        expr: elasticsearch_cluster_health_status{color="yellow"} == 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elasticsearch cluster status is yellow"
+          description: "Elasticsearch cluster on {{ $labels.instance }} has been in yellow state for 10+ minutes."
+
+      - alert: DockerContainerHighCPU
+        expr: rate(container_cpu_usage_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Docker container high CPU usage"
+          description: "Container {{ $labels.name }} on {{ $labels.instance }} is using {{ $value }}% CPU."
+
+      - alert: DockerContainerHighMemory
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Docker container high memory usage"
+          description: "Container {{ $labels.name }} on {{ $labels.instance }} is using {{ $value }}% of memory limit."
+
+  # Threat Intelligence Alerts
+  - name: threat_intelligence.rules
+    rules:
+      - alert: KnownMaliciousIP
+        expr: increase(honeypot_connections_total{threat_level="high"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: high
+        annotations:
+          summary: "Connection from known malicious IP"
+          description: "{{ $value }} connections from high-threat IP {{ $labels.src_ip }} detected."
+
+      - alert: BotnetActivity
+        expr: increase(security_events_total{event_type="botnet_activity"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: high
+        annotations:
+          summary: "Botnet activity detected"
+          description: "{{ $value }} botnet-related events detected on {{ $labels.instance }}."
+
+      - alert: APTIndicators
+        expr: increase(security_events_total{event_type="apt_indicators"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "APT indicators detected"
+          description: "{{ $value }} APT-related indicators detected on {{ $labels.instance }}."
+
+      - alert: RansomwareSignatures
+        expr: increase(malware_samples_total{family="ransomware"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ransomware signatures detected"
+          description: "{{ $value }} ransomware samples detected on {{ $labels.instance }}."
+
+  # Backup and Maintenance Alerts
+  - name: maintenance.rules
+    rules:
+      - alert: BackupFailed
+        expr: increase(backup_failures_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: high
+        annotations:
+          summary: "Backup failed"
+          description: "{{ $value }} backup failures detected on {{ $labels.instance }}."
+
+      - alert: LogRotationFailed
+        expr: increase(log_rotation_failures_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: medium
+        annotations:
+          summary: "Log rotation failed"
+          description: "{{ $value }} log rotation failures on {{ $labels.instance }}."
+
+      - alert: CertificateExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 30
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value }} days."
+
+      - alert: CertificateExpired
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SSL certificate expired"
+          description: "SSL certificate for {{ $labels.instance }} has expired."
+
+  # Custom Business Logic Alerts
+  - name: business_logic.rules
+    rules:
+      - alert: UnusualAttackTiming
+        expr: hour() >= 2 and hour() <= 6 and rate(honeypot_connections_total[5m]) > 50
+        for: 5m
+        labels:
+          severity: medium
+        annotations:
+          summary: "Unusual attack timing detected"
+          description: "High attack rate ({{ $value }}/sec) during unusual hours (2-6 AM) on {{ $labels.instance }}."
+
+      - alert: GeographicAnomalyDetected
+        expr: increase(honeypot_connections_total{country!~"US|CN|RU|BR|IN"}[1h]) > 100
+        for: 10m
+        labels:
+          severity: low
+        annotations:
+          summary: "Geographic anomaly in attack sources"
+          description: "{{ $value }} connections from unusual geographic location {{ $labels.country }}."
+
+      - alert: AttackCampaignDetected
+        expr: count by (attack_signature) (increase(security_events_total[1h])) > 50
+        for: 15m
+        labels:
+          severity: medium
+        annotations:
+          summary: "Coordinated attack campaign detected"
+          description: "{{ $value }} events with signature {{ $labels.attack_signature }} suggest coordinated campaign."

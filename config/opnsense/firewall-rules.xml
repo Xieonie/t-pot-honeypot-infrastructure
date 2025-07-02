@@ -1,0 +1,275 @@
+<?xml version="1.0"?>
+<opnsense>
+  <filter>
+    <rule>
+      <id>1</id>
+      <tracker>1</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <tag></tag>
+      <tagged></tagged>
+      <max></max>
+      <max-src-nodes></max-src-nodes>
+      <max-src-conn></max-src-conn>
+      <max-src-states></max-src-states>
+      <statetimeout></statetimeout>
+      <statetype>keep state</statetype>
+      <os></os>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>22</port>
+      </destination>
+      <descr>Allow SSH to T-Pot honeypot</descr>
+      <log>1</log>
+      <created>
+        <time>1640995200</time>
+        <username>admin</username>
+      </created>
+      <updated>
+        <time>1640995200</time>
+        <username>admin</username>
+      </updated>
+    </rule>
+    
+    <rule>
+      <id>2</id>
+      <tracker>2</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>23</port>
+      </destination>
+      <descr>Allow Telnet to T-Pot honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <rule>
+      <id>3</id>
+      <tracker>3</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>80</port>
+      </destination>
+      <descr>Allow HTTP to T-Pot honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <rule>
+      <id>4</id>
+      <tracker>4</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>443</port>
+      </destination>
+      <descr>Allow HTTPS to T-Pot honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <rule>
+      <id>5</id>
+      <tracker>5</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>2222</port>
+      </destination>
+      <descr>Allow SSH alternate port to T-Pot honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <rule>
+      <id>6</id>
+      <tracker>6</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>8080</port>
+      </destination>
+      <descr>Allow HTTP alternate port to T-Pot honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <rule>
+      <id>7</id>
+      <tracker>7</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>udp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>53</port>
+      </destination>
+      <descr>Allow DNS to T-Pot honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <rule>
+      <id>8</id>
+      <tracker>8</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>udp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>161</port>
+      </destination>
+      <descr>Allow SNMP to T-Pot honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <rule>
+      <id>9</id>
+      <tracker>9</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>udp</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <address>10.0.100.10</address>
+        <port>1900</port>
+      </destination>
+      <descr>Allow UPnP to T-Pot honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <!-- Block honeypot access to management network -->
+    <rule>
+      <id>10</id>
+      <tracker>10</tracker>
+      <type>block</type>
+      <interface>dmz</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>any</protocol>
+      <source>
+        <network>10.0.100.0/24</network>
+      </source>
+      <destination>
+        <network>192.168.1.0/24</network>
+      </destination>
+      <descr>Block honeypot access to management network</descr>
+      <log>1</log>
+    </rule>
+    
+    <!-- Allow management access to honeypot for monitoring -->
+    <rule>
+      <id>11</id>
+      <tracker>11</tracker>
+      <type>pass</type>
+      <interface>lan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <network>192.168.1.0/24</network>
+      </source>
+      <destination>
+        <network>10.0.100.0/24</network>
+      </destination>
+      <destination_port>22,64297</destination_port>
+      <descr>Allow management access to honeypot</descr>
+      <log>1</log>
+    </rule>
+    
+    <!-- Allow limited outbound for honeypot -->
+    <rule>
+      <id>12</id>
+      <tracker>12</tracker>
+      <type>pass</type>
+      <interface>dmz</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <network>10.0.100.0/24</network>
+      </source>
+      <destination>
+        <any>1</any>
+      </destination>
+      <destination_port>80,443,53</destination_port>
+      <descr>Allow honeypot outbound for updates</descr>
+      <log>1</log>
+    </rule>
+    
+    <!-- Log all other outbound connections from honeypot -->
+    <rule>
+      <id>13</id>
+      <tracker>13</tracker>
+      <type>pass</type>
+      <interface>dmz</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>any</protocol>
+      <source>
+        <network>10.0.100.0/24</network>
+      </source>
+      <destination>
+        <any>1</any>
+      </destination>
+      <descr>Log all other honeypot outbound traffic</descr>
+      <log>1</log>
+    </rule>
+    
+    <!-- Default deny all to honeypot network -->
+    <rule>
+      <id>14</id>
+      <tracker>14</tracker>
+      <type>block</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>any</protocol>
+      <source>
+        <any>1</any>
+      </source>
+      <destination>
+        <network>10.0.100.0/24</network>
+      </destination>
+      <descr>Block all other traffic to honeypot network</descr>
+      <log>1</log>
+    </rule>
+  </filter>
+</opnsense>

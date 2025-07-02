@@ -1,0 +1,194 @@
+{
+  "name": "opnsense-template",
+  "description": "OPNsense Firewall Template for T-Pot Infrastructure",
+  "version": "1.0",
+  "template_type": "vm",
+  "os_type": "freebsd",
+  "architecture": "x86_64",
+  
+  "hardware": {
+    "memory": {
+      "size_mb": 2048,
+      "balloon": true,
+      "shares": 1000
+    },
+    "cpu": {
+      "cores": 2,
+      "sockets": 1,
+      "type": "host",
+      "flags": "+aes"
+    },
+    "disk": {
+      "size_gb": 20,
+      "format": "qcow2",
+      "cache": "writeback",
+      "discard": "on",
+      "ssd": true
+    },
+    "network": [
+      {
+        "interface": "net0",
+        "model": "virtio",
+        "bridge": "vmbr0",
+        "firewall": false,
+        "link_down": false,
+        "mac_address": "auto",
+        "description": "WAN Interface"
+      },
+      {
+        "interface": "net1", 
+        "model": "virtio",
+        "bridge": "vmbr1",
+        "firewall": false,
+        "link_down": false,
+        "mac_address": "auto",
+        "description": "LAN Interface"
+      },
+      {
+        "interface": "net2",
+        "model": "virtio", 
+        "bridge": "vmbr2",
+        "firewall": false,
+        "link_down": false,
+        "mac_address": "auto",
+        "description": "DMZ Interface"
+      }
+    ]
+  },
+  
+  "boot": {
+    "order": "ide2,scsi0",
+    "menu": false
+  },
+  
+  "display": {
+    "type": "qxl",
+    "memory_mb": 16
+  },
+  
+  "features": {
+    "acpi": true,
+    "kvm": true,
+    "tablet": true,
+    "protection": true
+  },
+  
+  "startup": {
+    "order": 1,
+    "up_delay": 30,
+    "down_delay": 60
+  },
+  
+  "tags": [
+    "firewall",
+    "opnsense", 
+    "security",
+    "tpot-infrastructure"
+  ],
+  
+  "cloud_init": {
+    "enabled": false
+  },
+  
+  "backup": {
+    "enabled": true,
+    "schedule": "daily",
+    "retention": 7
+  },
+  
+  "monitoring": {
+    "enabled": true,
+    "agent": false
+  },
+  
+  "installation": {
+    "iso": "OPNsense-23.7-OpenSSL-dvd-amd64.iso",
+    "boot_from_iso": true,
+    "auto_install": false,
+    "post_install_script": "/opt/tpot/scripts/setup/configure-opnsense.sh"
+  },
+  
+  "network_config": {
+    "wan": {
+      "interface": "vtnet0",
+      "type": "dhcp",
+      "description": "WAN Interface - Internet Connection"
+    },
+    "lan": {
+      "interface": "vtnet1", 
+      "ip": "192.168.1.1",
+      "subnet": "24",
+      "description": "LAN Interface - Management Network"
+    },
+    "dmz": {
+      "interface": "vtnet2",
+      "ip": "10.0.100.1", 
+      "subnet": "24",
+      "description": "DMZ Interface - Honeypot Network"
+    }
+  },
+  
+  "firewall_rules": {
+    "default_policy": "block",
+    "rules": [
+      {
+        "action": "pass",
+        "interface": "wan",
+        "protocol": "tcp",
+        "source": "any",
+        "destination": "10.0.100.10",
+        "ports": [22, 23, 80, 443, 2222, 8080],
+        "description": "Allow honeypot services"
+      },
+      {
+        "action": "block",
+        "interface": "dmz",
+        "protocol": "any", 
+        "source": "10.0.100.0/24",
+        "destination": "192.168.1.0/24",
+        "description": "Block honeypot to management"
+      }
+    ]
+  },
+  
+  "services": {
+    "dhcp": {
+      "enabled": true,
+      "interface": "lan",
+      "range_start": "192.168.1.100",
+      "range_end": "192.168.1.199",
+      "lease_time": 86400
+    },
+    "dns": {
+      "enabled": true,
+      "forwarders": ["8.8.8.8", "8.8.4.4"],
+      "domain": "tpot.local"
+    },
+    "ntp": {
+      "enabled": true,
+      "servers": ["pool.ntp.org"]
+    }
+  },
+  
+  "logging": {
+    "level": "informational",
+    "remote_syslog": {
+      "enabled": true,
+      "server": "192.168.1.50",
+      "port": 514,
+      "facility": "local0"
+    }
+  },
+  
+  "high_availability": {
+    "enabled": false,
+    "sync_interface": "lan",
+    "backup_node": null
+  },
+  
+  "performance": {
+    "optimization": "security",
+    "state_table_size": 100000,
+    "firewall_optimization": "aggressive"
+  }
+}

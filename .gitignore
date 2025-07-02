@@ -1,0 +1,165 @@
+# T-Pot Honeypot Infrastructure - Git Ignore File
+
+# Configuration files with sensitive data
+config/environment.conf
+config/secrets.conf
+config/api-keys.conf
+
+# Backup files
+*.backup
+*.bak
+*~
+.#*
+
+# Log files
+*.log
+logs/
+/tmp/
+*.tmp
+
+# SSL certificates and keys
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+certificates/
+ssl/
+
+# SSH keys
+id_rsa*
+id_ed25519*
+*.pub
+authorized_keys
+known_hosts
+
+# VM disk images and ISOs
+*.iso
+*.qcow2
+*.vmdk
+*.vdi
+*.img
+
+# Proxmox backup files
+*.vma
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+
+# OPNsense configuration backups
+*-config-*.xml
+opnsense-backup-*
+
+# T-Pot data and logs
+/data/
+tpot-data/
+honeypot-logs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+.DS_Store
+Thumbs.db
+.directory
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vim/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Ansible
+*.retry
+.vault_pass
+
+# Monitoring data
+prometheus-data/
+grafana-data/
+elasticsearch-data/
+
+# Test results
+test-results/
+coverage/
+.coverage
+.pytest_cache/
+
+# Documentation build
+_build/
+.doctrees/
+
+# Package files
+*.deb
+*.rpm
+*.pkg
+*.dmg
+
+# Compressed files
+*.zip
+*.rar
+*.7z
+*.gz
+*.bz2
+*.xz
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor directories
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Network captures
+*.pcap
+*.pcapng
+*.cap
+
+# Custom ignore patterns
+# Add your custom patterns below this line

@@ -1,0 +1,64 @@
+# T-Pot Honeypot Infrastructure Configuration
+# Copy this file to environment.conf and customize for your environment
+
+# Proxmox Configuration
+PROXMOX_NODE="proxmox-node1"
+PROXMOX_STORAGE="local-lvm"
+
+# VM Configuration
+OPNSENSE_VM_ID="100"
+TPOT_VM_ID="101"
+
+# Network Configuration
+WAN_BRIDGE="vmbr0"              # Existing bridge connected to LAN/Internet
+LAN_BRIDGE="vmbr1"              # Isolated bridge for honeypot network
+HONEYPOT_NETWORK="10.0.100.0/24"
+OPNSENSE_LAN_IP="10.0.100.1"
+TPOT_IP="10.0.100.10"
+
+# OPNsense Configuration
+OPNSENSE_WAN_TYPE="dhcp"        # dhcp or static
+OPNSENSE_WAN_IP=""              # Only if static
+OPNSENSE_WAN_GATEWAY=""         # Only if static
+OPNSENSE_ADMIN_PASSWORD=""      # Set during installation
+
+# T-Pot Configuration
+TPOT_WEB_USER="admin"
+TPOT_WEB_PASSWORD=""            # Set during installation
+TPOT_EDITION="STANDARD"         # STANDARD, SENSOR, INDUSTRIAL, etc.
+
+# Security Configuration
+MANAGEMENT_NETWORK="192.168.1.0/24"
+TRUSTED_ADMIN_IP="192.168.1.100"
+SSH_PORT="2222"
+HTTPS_PORT="8443"
+
+# Monitoring Configuration
+ENABLE_MONITORING="true"
+GRAFANA_ADMIN_PASSWORD=""
+PROMETHEUS_RETENTION="30d"
+
+# Backup Configuration
+BACKUP_ENABLED="true"
+BACKUP_LOCATION="/backup/tpot"
+BACKUP_RETENTION_DAYS="30"
+
+# Email Notifications (optional)
+SMTP_SERVER=""
+SMTP_PORT="587"
+SMTP_USERNAME=""
+SMTP_PASSWORD=""
+ALERT_EMAIL=""
+
+# Advanced Configuration
+ENABLE_IDS="true"
+ENABLE_VPN="true"
+VPN_NETWORK="10.0.200.0/24"
+LOG_LEVEL="INFO"
+
+# Resource Limits
+OPNSENSE_MEMORY="2048"          # MB
+OPNSENSE_CORES="2"
+TPOT_MEMORY="8192"              # MB
+TPOT_CORES="4"
+TPOT_DISK_SIZE="128"            # GB

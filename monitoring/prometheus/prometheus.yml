@@ -1,0 +1,231 @@
+# Prometheus Configuration for T-Pot Honeypot Infrastructure
+# This configuration monitors all components of the T-Pot infrastructure
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'tpot-infrastructure'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'
+rule_files:
+  - "alert-rules.yml"
+  - "recording-rules.yml"
+
+# Scrape configuration
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Proxmox VE Host
+  - job_name: 'proxmox-host'
+    static_configs:
+      - targets: ['192.168.1.10:9100']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 192.168.1.10:9100
+
+  # T-Pot VM Node Exporter
+  - job_name: 'tpot-node'
+    static_configs:
+      - targets: ['10.0.100.10:9100']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.0.100.10:9100
+
+  # T-Pot Application Metrics
+  - job_name: 'tpot-application'
+    static_configs:
+      - targets: ['10.0.100.10:64297']
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    metrics_path: /metrics
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+
+  # Docker Container Metrics (cAdvisor)
+  - job_name: 'docker-containers'
+    static_configs:
+      - targets: ['10.0.100.10:8080']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+
+  # Elasticsearch Metrics
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['10.0.100.10:9200']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /_prometheus/metrics
+    scheme: http
+
+  # Honeypot Services Metrics
+  - job_name: 'cowrie-honeypot'
+    static_configs:
+      - targets: ['10.0.100.10:9001']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+
+  - job_name: 'dionaea-honeypot'
+    static_configs:
+      - targets: ['10.0.100.10:9002']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+
+  - job_name: 'elasticpot-honeypot'
+    static_configs:
+      - targets: ['10.0.100.10:9003']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+
+  # Network Monitoring
+  - job_name: 'blackbox-exporter'
+    static_configs:
+      - targets: ['localhost:9115']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+
+  # Blackbox probes for service availability
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://10.0.100.10:64297  # T-Pot web interface
+        - https://192.168.1.1        # OPNsense web interface
+        - https://192.168.1.10:8006  # Proxmox web interface
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115
+
+  - job_name: 'blackbox-tcp'
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - 10.0.100.10:22    # SSH honeypot
+        - 10.0.100.10:23    # Telnet honeypot
+        - 10.0.100.10:80    # HTTP honeypot
+        - 10.0.100.10:443   # HTTPS honeypot
+        - 10.0.100.10:2222  # SSH alternate
+        - 10.0.100.10:8080  # HTTP alternate
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115
+
+  # SNMP Monitoring (if configured)
+  - job_name: 'snmp-opnsense'
+    static_configs:
+      - targets:
+        - 192.168.1.1  # OPNsense firewall
+    metrics_path: /snmp
+    params:
+      module: [if_mib]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9116
+
+  # Custom Honeypot Metrics
+  - job_name: 'honeypot-metrics'
+    static_configs:
+      - targets: ['10.0.100.10:9090']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: /honeypot/metrics
+    honor_labels: true
+
+  # Log-based Metrics (mtail or similar)
+  - job_name: 'log-metrics'
+    static_configs:
+      - targets: ['10.0.100.10:3903']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+
+  # Security Metrics
+  - job_name: 'security-metrics'
+    static_configs:
+      - targets: ['10.0.100.10:9091']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /metrics
+
+# Remote write configuration (for long-term storage)
+remote_write:
+  - url: "http://localhost:8086/api/v1/prom/write?db=prometheus"
+    queue_config:
+      max_samples_per_send: 1000
+      max_shards: 200
+      capacity: 2500
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus/data
+    retention.time: 30d
+    retention.size: 50GB
+    wal-compression: true
+
+# Web configuration
+web:
+  console.templates: /etc/prometheus/consoles
+  console.libraries: /etc/prometheus/console_libraries
+  enable-lifecycle: true
+  enable-admin-api: true
+  max-connections: 512
+
+# Feature flags
+feature_flags:
+  - promql-at-modifier
+  - remote-write-receiver
+
+# Tracing configuration (optional)
+tracing:
+  endpoint: "localhost:14268"
+  sampling_fraction: 0.1

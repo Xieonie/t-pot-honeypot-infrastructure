@@ -1,0 +1,265 @@
+{
+  "name": "tpot-template",
+  "description": "T-Pot Honeypot Template for Multi-Honeypot Platform",
+  "version": "1.0",
+  "template_type": "vm",
+  "os_type": "linux",
+  "architecture": "x86_64",
+  
+  "hardware": {
+    "memory": {
+      "size_mb": 8192,
+      "balloon": true,
+      "shares": 1000
+    },
+    "cpu": {
+      "cores": 4,
+      "sockets": 1,
+      "type": "host",
+      "flags": "+aes"
+    },
+    "disk": {
+      "size_gb": 100,
+      "format": "qcow2",
+      "cache": "writeback",
+      "discard": "on",
+      "ssd": true
+    },
+    "network": [
+      {
+        "interface": "net0",
+        "model": "virtio",
+        "bridge": "vmbr2",
+        "firewall": false,
+        "link_down": false,
+        "mac_address": "52:54:00:12:34:59",
+        "description": "DMZ Interface - Honeypot Network"
+      }
+    ]
+  },
+  
+  "boot": {
+    "order": "ide2,scsi0",
+    "menu": false
+  },
+  
+  "display": {
+    "type": "qxl",
+    "memory_mb": 32
+  },
+  
+  "features": {
+    "acpi": true,
+    "kvm": true,
+    "tablet": true,
+    "protection": true
+  },
+  
+  "startup": {
+    "order": 2,
+    "up_delay": 60,
+    "down_delay": 30
+  },
+  
+  "tags": [
+    "honeypot",
+    "tpot",
+    "security",
+    "monitoring",
+    "tpot-infrastructure"
+  ],
+  
+  "cloud_init": {
+    "enabled": true,
+    "user": "tpot",
+    "password": "$6$rounds=4096$salt$hash",
+    "ssh_keys": [],
+    "upgrade": true,
+    "network_config": "static"
+  },
+  
+  "backup": {
+    "enabled": true,
+    "schedule": "daily",
+    "retention": 7,
+    "exclude_paths": [
+      "/data/logs/*.pcap",
+      "/tmp/*"
+    ]
+  },
+  
+  "monitoring": {
+    "enabled": true,
+    "agent": true,
+    "node_exporter": true
+  },
+  
+  "installation": {
+    "iso": "ubuntu-22.04.3-live-server-amd64.iso",
+    "boot_from_iso": true,
+    "auto_install": true,
+    "preseed_file": "/opt/tpot/config/ubuntu-preseed.cfg",
+    "post_install_script": "/opt/tpot/scripts/setup/install-tpot.sh"
+  },
+  
+  "network_config": {
+    "interface": "ens18",
+    "ip": "10.0.100.10",
+    "netmask": "255.255.255.0",
+    "gateway": "10.0.100.1",
+    "dns_servers": ["10.0.100.1", "8.8.8.8"],
+    "domain": "tpot.local"
+  },
+  
+  "tpot_config": {
+    "version": "23.04",
+    "edition": "STANDARD",
+    "web_interface": {
+      "enabled": true,
+      "port": 64297,
+      "ssl": true
+    },
+    "honeypots": {
+      "cowrie": {
+        "enabled": true,
+        "ssh_port": 22,
+        "telnet_port": 23
+      },
+      "dionaea": {
+        "enabled": true,
+        "ftp_port": 21,
+        "http_port": 80,
+        "https_port": 443,
+        "smb_port": 445
+      },
+      "elasticpot": {
+        "enabled": true,
+        "port": 9200
+      },
+      "honeytrap": {
+        "enabled": true,
+        "ports": [2222, 8080]
+      },
+      "mailoney": {
+        "enabled": true,
+        "port": 25
+      },
+      "rdpy": {
+        "enabled": true,
+        "port": 3389
+      },
+      "snare": {
+        "enabled": true,
+        "port": 8081
+      },
+      "heralding": {
+        "enabled": true,
+        "ports": [110, 143, 993, 995]
+      }
+    },
+    "monitoring": {
+      "elasticsearch": true,
+      "kibana": true,
+      "logstash": true,
+      "suricata": true,
+      "p0f": true
+    }
+  },
+  
+  "security": {
+    "firewall": {
+      "enabled": true,
+      "default_policy": "deny",
+      "allowed_management_ips": ["192.168.1.0/24"],
+      "honeypot_ports": [21, 22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 2222, 3389, 8080, 8081, 9200]
+    },
+    "fail2ban": {
+      "enabled": true,
+      "ban_time": 3600,
+      "max_retry": 3
+    },
+    "updates": {
+      "auto_security_updates": true,
+      "reboot_if_required": false
+    }
+  },
+  
+  "data_management": {
+    "log_retention": {
+      "days": 30,
+      "max_size_gb": 50
+    },
+    "backup_schedule": "0 2 * * *",
+    "log_rotation": {
+      "enabled": true,
+      "compress": true,
+      "max_age": 7
+    }
+  },
+  
+  "performance": {
+    "optimization": "honeypot",
+    "docker_limits": {
+      "memory": "6G",
+      "cpu": "3.0"
+    },
+    "disk_io": {
+      "scheduler": "deadline",
+      "read_ahead": 256
+    }
+  },
+  
+  "alerting": {
+    "enabled": true,
+    "channels": {
+      "email": {
+        "enabled": false,
+        "smtp_server": "",
+        "recipients": []
+      },
+      "syslog": {
+        "enabled": true,
+        "server": "192.168.1.50",
+        "port": 514
+      },
+      "webhook": {
+        "enabled": false,
+        "url": ""
+      }
+    },
+    "rules": [
+      {
+        "name": "high_volume_attack",
+        "condition": "connections_per_minute > 100",
+        "severity": "critical"
+      },
+      {
+        "name": "malware_detected",
+        "condition": "malware_samples > 0",
+        "severity": "high"
+      },
+      {
+        "name": "system_resource_high",
+        "condition": "cpu_usage > 90 OR memory_usage > 90",
+        "severity": "warning"
+      }
+    ]
+  },
+  
+  "integration": {
+    "threat_intelligence": {
+      "enabled": true,
+      "feeds": [
+        "https://feodotracker.abuse.ch/downloads/ipblocklist.json",
+        "https://mb-api.abuse.ch/api/v1/"
+      ],
+      "update_interval": 3600
+    },
+    "siem": {
+      "enabled": false,
+      "type": "splunk",
+      "endpoint": "",
+      "api_key": ""
+    }
+  }
+}

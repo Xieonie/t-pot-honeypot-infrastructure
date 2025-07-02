@@ -1,0 +1,394 @@
+{
+  "vmid": 101,
+  "name": "tpot-honeypot-template",
+  "description": "T-Pot Honeypot VM Template for Multi-Honeypot Platform",
+  "template": 1,
+  "ostype": "l26",
+  "arch": "x86_64",
+  "cores": 4,
+  "sockets": 1,
+  "memory": 8192,
+  "balloon": 1,
+  "shares": 1000,
+  "numa": 0,
+  "hotplug": "disk,network,usb",
+  "boot": "order=ide2;scsi0",
+  "bootdisk": "scsi0",
+  "scsihw": "virtio-scsi-pci",
+  "scsi0": "local-lvm:vm-101-disk-0,size=100G,cache=writeback,discard=on,ssd=1",
+  "ide2": "local:iso/ubuntu-22.04.3-live-server-amd64.iso,media=cdrom",
+  "net0": "virtio,bridge=vmbr2,firewall=0,link_down=0,macaddr=52:54:00:12:34:59",
+  "vga": "qxl,memory=32",
+  "tablet": 1,
+  "acpi": 1,
+  "kvm": 1,
+  "protection": 1,
+  "startup": "order=2,up=60,down=30",
+  "tags": "honeypot;tpot;security;monitoring;tpot-infrastructure",
+  "meta": {
+    "creation_date": "2024-01-01",
+    "created_by": "tpot-infrastructure-script",
+    "purpose": "Multi-honeypot platform for threat detection and analysis",
+    "maintenance_schedule": "weekly",
+    "backup_schedule": "daily",
+    "monitoring_enabled": true,
+    "tpot_version": "23.04",
+    "last_updated": "2024-01-01"
+  },
+  "network_config": {
+    "interface": "ens18",
+    "ip": "10.0.100.10",
+    "netmask": "255.255.255.0",
+    "gateway": "10.0.100.1",
+    "dns_servers": ["10.0.100.1", "8.8.8.8", "8.8.4.4"],
+    "domain": "tpot.local",
+    "hostname": "tpot-honeypot"
+  },
+  "cloud_init": {
+    "enabled": true,
+    "user": "tpot",
+    "password_hash": "$6$rounds=4096$salt$hash",
+    "ssh_keys": [],
+    "upgrade": true,
+    "packages": [
+      "docker.io",
+      "docker-compose",
+      "git",
+      "curl",
+      "wget",
+      "htop",
+      "iotop",
+      "nethogs",
+      "ufw",
+      "fail2ban"
+    ],
+    "runcmd": [
+      "systemctl enable docker",
+      "systemctl start docker",
+      "usermod -aG docker tpot",
+      "git clone https://github.com/telekom-security/tpotce.git /opt/tpot",
+      "chown -R tpot:tpot /opt/tpot"
+    ]
+  },
+  "tpot_config": {
+    "version": "23.04",
+    "edition": "STANDARD",
+    "installation_type": "docker",
+    "data_directory": "/data/tpot",
+    "log_directory": "/data/tpot/logs",
+    "config_directory": "/opt/tpot/etc",
+    "web_interface": {
+      "enabled": true,
+      "port": 64297,
+      "ssl": true,
+      "username": "admin",
+      "password_hash": "$2b$10$..."
+    },
+    "honeypots": {
+      "cowrie": {
+        "enabled": true,
+        "ssh_port": 22,
+        "telnet_port": 23,
+        "hostname": "server01",
+        "kernel_version": "Linux 5.4.0-74-generic"
+      },
+      "dionaea": {
+        "enabled": true,
+        "ftp_port": 21,
+        "http_port": 80,
+        "https_port": 443,
+        "smb_port": 445,
+        "sip_port": 5060
+      },
+      "elasticpot": {
+        "enabled": true,
+        "port": 9200,
+        "cluster_name": "elasticsearch",
+        "node_name": "node-1"
+      },
+      "honeytrap": {
+        "enabled": true,
+        "listen_address": "0.0.0.0",
+        "ports": [2222, 8080]
+      },
+      "mailoney": {
+        "enabled": true,
+        "port": 25,
+        "hostname": "mail.company.com"
+      },
+      "rdpy": {
+        "enabled": true,
+        "port": 3389
+      },
+      "snare": {
+        "enabled": true,
+        "port": 8081
+      },
+      "tanner": {
+        "enabled": true,
+        "host": "tanner",
+        "port": 8090
+      },
+      "heralding": {
+        "enabled": true,
+        "protocols": {
+          "ftp": 2121,
+          "http": 8888,
+          "pop3": 110,
+          "smtp": 587,
+          "ssh": 2223,
+          "telnet": 2323
+        }
+      }
+    },
+    "monitoring": {
+      "elasticsearch": {
+        "enabled": true,
+        "port": 9200,
+        "cluster_name": "tpot-cluster"
+      },
+      "kibana": {
+        "enabled": true,
+        "port": 5601
+      },
+      "logstash": {
+        "enabled": true,
+        "port": 5044
+      },
+      "suricata": {
+        "enabled": true,
+        "interface": "ens18",
+        "rules_dir": "/etc/suricata/rules"
+      },
+      "p0f": {
+        "enabled": true,
+        "interface": "ens18"
+      },
+      "spiderfoot": {
+        "enabled": false,
+        "port": 5001
+      }
+    }
+  },
+  "security": {
+    "firewall": {
+      "enabled": true,
+      "default_policy": "deny",
+      "allowed_management_ips": ["192.168.1.0/24"],
+      "honeypot_ports": [
+        21, 22, 23, 25, 53, 80, 110, 143, 443, 993, 995,
+        2121, 2222, 2223, 2323, 3389, 5060, 8080, 8081, 8888, 9200
+      ],
+      "management_ports": [22, 64297]
+    },
+    "fail2ban": {
+      "enabled": true,
+      "ban_time": 3600,
+      "max_retry": 3,
+      "jails": ["sshd", "tpot-web"]
+    },
+    "updates": {
+      "auto_security_updates": true,
+      "reboot_if_required": false,
+      "update_schedule": "0 2 * * 0"
+    },
+    "ssh": {
+      "port": 22,
+      "permit_root_login": false,
+      "password_authentication": false,
+      "pubkey_authentication": true,
+      "max_auth_tries": 3
+    }
+  },
+  "data_management": {
+    "log_retention": {
+      "days": 30,
+      "max_size_gb": 50,
+      "compression": true
+    },
+    "backup": {
+      "enabled": true,
+      "schedule": "0 2 * * *",
+      "retention_days": 7,
+      "include_logs": false,
+      "include_malware": true,
+      "destination": "/backup/tpot"
+    },
+    "log_rotation": {
+      "enabled": true,
+      "compress": true,
+      "max_age": 7,
+      "max_size": "100M"
+    },
+    "data_directories": {
+      "logs": "/data/tpot/logs",
+      "malware": "/data/tpot/malware", 
+      "pcaps": "/data/tpot/pcaps",
+      "elasticsearch": "/data/elasticsearch",
+      "config": "/opt/tpot/etc"
+    }
+  },
+  "performance": {
+    "optimization": "honeypot",
+    "docker_limits": {
+      "memory": "6G",
+      "cpu": "3.0",
+      "swap": "2G"
+    },
+    "disk_io": {
+      "scheduler": "deadline",
+      "read_ahead": 256
+    },
+    "network": {
+      "tcp_window_scaling": true,
+      "tcp_timestamps": true,
+      "tcp_sack": true
+    },
+    "kernel_parameters": {
+      "vm.swappiness": 10,
+      "net.core.rmem_max": 134217728,
+      "net.core.wmem_max": 134217728,
+      "net.ipv4.tcp_rmem": "4096 87380 134217728",
+      "net.ipv4.tcp_wmem": "4096 65536 134217728"
+    }
+  },
+  "alerting": {
+    "enabled": true,
+    "channels": {
+      "email": {
+        "enabled": false,
+        "smtp_server": "",
+        "smtp_port": 587,
+        "username": "",
+        "recipients": []
+      },
+      "syslog": {
+        "enabled": true,
+        "server": "192.168.1.50",
+        "port": 514,
+        "facility": "local0"
+      },
+      "webhook": {
+        "enabled": false,
+        "url": "",
+        "secret": ""
+      }
+    },
+    "rules": [
+      {
+        "name": "high_volume_attack",
+        "condition": "connections_per_minute > 100",
+        "severity": "critical",
+        "enabled": true
+      },
+      {
+        "name": "malware_detected",
+        "condition": "malware_samples > 0",
+        "severity": "high",
+        "enabled": true
+      },
+      {
+        "name": "system_resource_high",
+        "condition": "cpu_usage > 90 OR memory_usage > 90",
+        "severity": "warning",
+        "enabled": true
+      },
+      {
+        "name": "disk_space_low",
+        "condition": "disk_usage > 85",
+        "severity": "warning",
+        "enabled": true
+      }
+    ]
+  },
+  "integration": {
+    "threat_intelligence": {
+      "enabled": true,
+      "feeds": [
+        {
+          "name": "abuse_ch_feodo",
+          "url": "https://feodotracker.abuse.ch/downloads/ipblocklist.json",
+          "update_interval": 3600,
+          "format": "json"
+        },
+        {
+          "name": "malware_bazaar",
+          "url": "https://mb-api.abuse.ch/api/v1/",
+          "update_interval": 3600,
+          "format": "api"
+        }
+      ],
+      "enrichment": true,
+      "auto_block": false
+    },
+    "siem": {
+      "enabled": false,
+      "type": "splunk",
+      "endpoint": "",
+      "api_key": "",
+      "index": "tpot"
+    },
+    "prometheus": {
+      "enabled": true,
+      "port": 9090,
+      "metrics_path": "/metrics",
+      "scrape_interval": "15s"
+    }
+  },
+  "installation": {
+    "iso_file": "ubuntu-22.04.3-live-server-amd64.iso",
+    "auto_install": true,
+    "preseed_file": "/opt/tpot/config/ubuntu-preseed.cfg",
+    "post_install_script": "/opt/tpot/scripts/setup/install-tpot.sh",
+    "tpot_installer": "/opt/tpot/install.sh",
+    "installer_options": "--type=user --conf=STANDARD"
+  },
+  "deployment": {
+    "clone_from_template": true,
+    "linked_clone": false,
+    "full_clone": true,
+    "target_storage": "local-lvm",
+    "target_node": "proxmox-host",
+    "post_clone_script": "/opt/tpot/scripts/setup/post-clone-config.sh"
+  },
+  "maintenance": {
+    "health_checks": [
+      {
+        "name": "tpot_service",
+        "type": "systemctl",
+        "service": "tpot",
+        "interval": 300
+      },
+      {
+        "name": "docker_containers",
+        "type": "docker",
+        "min_containers": 10,
+        "interval": 300
+      },
+      {
+        "name": "elasticsearch_health",
+        "type": "http",
+        "url": "http://localhost:9200/_cluster/health",
+        "interval": 300
+      },
+      {
+        "name": "disk_space",
+        "type": "disk",
+        "threshold": 85,
+        "interval": 600
+      }
+    ],
+    "update_schedule": {
+      "system_updates": "0 2 * * 0",
+      "docker_images": "0 3 * * 0",
+      "tpot_updates": "0 4 * * 0",
+      "threat_intel": "0 */6 * * *"
+    },
+    "log_cleanup": {
+      "enabled": true,
+      "schedule": "0 1 * * *",
+      "retention_days": 30,
+      "compress_old_logs": true
+    }
+  }
+}
